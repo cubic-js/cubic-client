@@ -1,50 +1,56 @@
 [![Nexus Stats API Package](/banner.png)](https://github.com/nexus-devs)
 
-<p align="center">Nodejs package to connect to <a href="https://github.com/nexus-devs/blitz.js">blitz.js</a> API nodes.</p>
+<p align="center">Python package to connect to <a href="https://github.com/nexus-devs/blitz.js">blitz.js</a> API nodes.</p>
+<p align="center">Due to the engine change in Socket.io 2.x, using sockets may result in strange behaviour.</p>
 
 ##
 
 <br>
 
 ## Installation
-`npm install blitz-js-query`
+`pip install blitz_js_query`
 
 <br>
 
 ## Usage
-```js
-const Blitz = require("blitz-js-query")
-const blitz = new Blitz()
+```python
+from blitz_js_query import Blitz
 
-blitz.get("/foo").then(res => console.log(res.body)) // bar
+blitz_api = Blitz({
+    "api_url": "https://api.nexus-stats.com:443"
+})
+
+blitz_api.get("/foo").then(lambda res: print(res))
+# Result: {'status_code': 200, 'sent': True, 'body': 'bar'}
 ```
 
 <br>
 
 ## Configuration
-```javascript
-const Blitz = require("blitz-js-query")
-const blitz = new Blitz({key: value})
+```python
+from blitz_js_query import Blitz
+
+blitz_js_query = Blitz({key: value})
 ```
 
 | Key           | Default         | Description   |
 |:------------- |:------------- |:------------- |
-| api_url | "http://localhost:3010/" | URL of blitz.js API-Node to connect to | 
-| auth_url | "http://localhost:3030/" | URL of blitz.js Auth-Node to authenticate with | 
-| use_socket | true | Whether or not to use Socket.io as standard request engine. Setting to false uses http. Subscriptions will use Socket.io regardless. |
-| namespace | "/" | Socket.io namespace to connect to |
-| user_key | null | User key obtained via Auth-Node registration |
-| user_secret | null | User secret obtained via Auth-Node |
-| ignore_limiter | false | Whether or not to disable the default rate limit adaptions. Disabling this only makes sense if you connect as a user who won't face rate limits. If you disable it anyway, expect all your requests to get blocked. |
+| api_url | "http://localhost:3010/" | URL of blitz.js API-Node to connect to |
+| auth_url | "http://localhost:3030/" | URL of blitz.js Auth-Node to authenticate with |
+| use_socket | False | Whether or not to use Socket.io as standard request engine. Setting to false uses http. Subscriptions will use Socket.io regardless. |
+| namespace | LoggingNamespace | Socket.io namespace to connect to |
+| user_key | None | User key obtained via Auth-Node registration |
+| user_secret | None | User secret obtained via Auth-Node |
+| ignore_limiter | False | Whether or not to disable the default rate limit adaptions. Disabling this only makes sense if you connect as a user who won't face rate limits. If you disable it anyway, expect all your requests to get blocked. |
 
-<br> 
+<br>
 <br>
 
 ## API
 
 ### RESTful methods
-```js
-blitz.get(url)
+```python
+blitz_api.get(url)
 ```
 >Sends a GET request to the API-Node
 
@@ -54,8 +60,8 @@ blitz.get(url)
 
 <br>
 
-```js
-blitz.post(url, body)
+```python
+blitz_api.post(url, body)
 ```
 >Sends a POST request to the API-Node
 
@@ -66,8 +72,8 @@ blitz.post(url, body)
 
 <br>
 
-```js
-blitz.put(url, body)
+```python
+blitz_api.put(url, body)
 ```
 >Sends a PUT request to the API-Node
 
@@ -78,8 +84,8 @@ blitz.put(url, body)
 
 <br>
 
-```js
-blitz.patch(url, body)
+```python
+blitz_api.patch(url, body)
 ```
 >Sends a PATCH request to the API-Node
 
@@ -91,7 +97,7 @@ blitz.patch(url, body)
 <br>
 
 ```js
-blitz.delete(url, body)
+blitz_api.delete(url, body)
 ```
 >Sends a DELETE request to the API-Node
 
@@ -104,8 +110,8 @@ blitz.delete(url, body)
 
 ### Socket.io
 
-```js
-blitz.subscribe(endpoint)
+```python
+blitz_api.subscribe(endpoint)
 ```
 >Subscribe to updates on a specific endpoint. Updates can be listened to via `blitz.on(endpoint, fn)`.
 
@@ -115,8 +121,8 @@ blitz.subscribe(endpoint)
 
 <br>
 
-```js
-blitz.on(ev, fn)
+```python
+blitz_api.on(ev, fn)
 ```
 >Listens to specific Socket.io event, then runs the given function with the received data
 
@@ -127,8 +133,8 @@ blitz.on(ev, fn)
 
 <br>
 
-```js
-blitz.emit(ev, data)
+```python
+blitz_api.emit(ev, data)
 ```
 >Emits event via Socket.io client to server
 
@@ -141,4 +147,4 @@ blitz.emit(ev, data)
 <br>
 
 ## License
-[MIT](https://github.com/nexus-devs/npm-blitz-query/blob/master/LICENSE.md)
+[MIT](https://github.com/nexus-devs/pip-blitz-query/blob/master/LICENSE.md)
