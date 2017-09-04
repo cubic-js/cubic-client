@@ -1,4 +1,3 @@
-const extend = require('deep-extend')
 const Connection = require('./lib/connection.js')
 
 class Blitz {
@@ -7,7 +6,7 @@ class Blitz {
    */
   constructor (options) {
     this.connecting = null
-    this.options = extend({
+    this.options = Object.assign({
 
       // Resource Config
       api_url: 'http://localhost:3010/',
