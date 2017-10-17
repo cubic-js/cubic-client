@@ -19,8 +19,7 @@ class Connection {
    */
   setClient () {
     let sioConfig = this.auth.access_token ? {
-      query: 'bearer=' + this.auth.access_token,
-      reconnect: false
+      query: 'bearer=' + this.auth.access_token
     } : {}
 
     // Connect to parent namespace
