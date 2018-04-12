@@ -4,6 +4,8 @@
 
 ##
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/cubic-js/cubic-client.svg)](https://greenkeeper.io/)
+
 [![npm](https://img.shields.io/npm/v/cubic-client.svg)](https://npmjs.org/cubic-client)
 [![build](https://ci.nexus-stats.com/api/badges/cubic-js/cubic-client/status.svg)](https://ci.nexus-stats.com/cubic-js/cubic-client)
 [![dependencies](https://david-dm.org/cubic-js/cubic-client.svg)](https://david-dm.org/cubic-js/cubic-client)
