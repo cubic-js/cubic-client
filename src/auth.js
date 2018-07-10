@@ -18,12 +18,12 @@ class Auth {
   async req (verb, query) {
     let res = await new Promise(resolve => this.client.emit(verb, query, resolve))
     try {
-      res = JSON.parse(res.body)
+      res.body = JSON.parse(res.body)
     } catch (err) {
       throw res
     }
 
-    if (res.error) {
+    if (res.body.error) {
       throw res
     } else {
       return res
@@ -53,10 +53,10 @@ class Auth {
         url: '/authenticate',
         body
       })
-      this.access_token = res.access_token
-      this.refresh_token = res.refresh_token
+      this.access_token = res.body.access_token
+      this.refresh_token = res.body.refresh_token
     } catch (err) {
-      let t = err.reason ? parseInt(err.reason.replace(/[^0-9]+/g, '')) : 500
+      let t = err.body.reason ? parseInt(err.body.reason.replace(/[^0-9]+/g, '')) : 500
       t = isNaN(t) ? 500 : t
 
       if (err.statusCode !== 503) {
@@ -85,11 +85,11 @@ class Auth {
           url: '/refresh',
           body
         })
-        this.access_token = res.access_token
+        this.access_token = res.body.access_token
         this.refreshing = false
       } catch (err) {
         this.refreshing = false
-        let t = err.reason ? parseInt(err.reason.replace(/[^0-9]+/g, '')) : 5000
+        let t = err.body.reason ? parseInt(err.body.reason.replace(/[^0-9]+/g, '')) : 5000
         await timeout(() => this.refreshToken(), t)
       }
     }
