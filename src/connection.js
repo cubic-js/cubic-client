@@ -12,6 +12,10 @@ class Connection {
     this.subscriptions = []
     this.queue = queue
     this.auth = new Auth(options)
+
+    setInterval(() => {
+      if (this.client && !this.client.connected) this.reload()
+    }, 10000)
   }
 
   /**
@@ -35,7 +39,7 @@ class Connection {
 
     // Event listeners
     if (!skipListeners) {
-      this.client.on('error', console.error)
+      this.client.on('error', () => this.reload())
       this.client.on('connect_error', () => this.reload())
       this.client.on('disconnect', () => this.reload())
       this.client.on('connect', () => {
