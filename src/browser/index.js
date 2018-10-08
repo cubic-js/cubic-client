@@ -1,20 +1,10 @@
 import Connection from './connection.js'
 
 class Client {
-  /**
-   * Merge default options with client options
-   */
   constructor (options) {
     this.options = Object.assign({
-
-      // Resource Config
-      api_url: 'http://localhost:3003/',
-      auth_url: 'http://localhost:3030/',
-
-      // Connection Config
-      namespace: '/',
-
-      // Authorization Config
+      api_url: 'ws://localhost:3003/ws',
+      auth_url: 'ws://localhost:3030/ws',
       user_key: null,
       user_secret: null,
       ignore_limiter: false
@@ -33,7 +23,7 @@ class Client {
    * Connect by getting tokens and setting up clients
    */
   async connect () {
-    this.connection = new Connection(this.options)
+    this.connection = new Connection(this.options.api_url, this.options)
     this.connecting = this.connection.connect()
     await this.connecting
   }
@@ -41,45 +31,26 @@ class Client {
   /**
    * Subscribe to certain endpoints
    */
-  async subscribe (endpoint, fn) {
+  async subscribe (room, fn) {
     await this.connecting
-    this.emit('subscribe', endpoint)
-
-    // Function passed? Listen to subscribed endpoint directly.
-    return fn ? this.on(endpoint, fn) : null
+    this.connection.client.send(JSON.stringify({
+      action: 'SUBSCRIBE',
+      room
+    }))
+    this.connection.subscriptions.push({ room, fn })
   }
 
   /**
    * Unsubscribe from endpoints again
    */
-  async unsubscribe (endpoint) {
+  async unsubscribe (room) {
     await this.connecting
-    this.emit('unsubscribe', endpoint)
-    this.connection.client.off(endpoint)
-  }
-
-  /**
-   * Event listening for socket.io
-   */
-  async on (ev, fn) {
-    await this.connecting
-    return this.connection.client.on(ev, fn)
-  }
-
-  /**
-   * Event listening for socket.io
-   */
-  async once (ev, fn) {
-    await this.connecting
-    return this.connection.client.once(ev, fn)
-  }
-
-  /**
-   * Expose Socket client emit
-   */
-  async emit (ev, data) {
-    await this.connecting
-    this.connection.client.emit(ev, data)
+    this.connection.client.send(JSON.stringify({
+      action: 'UNSUBSCRIBE',
+      room
+    }))
+    const i = this.connection.subscriptions.findIndex(s => s.room === room)
+    this.connection.subscriptions.splice(i, 1)
   }
 
   /**

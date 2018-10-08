@@ -8,6 +8,22 @@ function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
 
+var _core = createCommonjsModule(function (module) {
+var core = module.exports = { version: '2.5.7' };
+if (typeof __e == 'number') __e = core;
+});
+var _core_1 = _core.version;
+
+var $JSON = _core.JSON || (_core.JSON = { stringify: JSON.stringify });
+var stringify = function stringify(it) {
+  return $JSON.stringify.apply($JSON, arguments);
+};
+
+var stringify$1 = createCommonjsModule(function (module) {
+module.exports = { "default": stringify, __esModule: true };
+});
+var _JSON$stringify = unwrapExports(stringify$1);
+
 var runtime = createCommonjsModule(function (module) {
 !(function(global) {
   var Op = Object.prototype;
@@ -538,12 +554,6 @@ var global = module.exports = typeof window != 'undefined' && window.Math == Mat
 if (typeof __g == 'number') __g = global;
 });
 
-var _core = createCommonjsModule(function (module) {
-var core = module.exports = { version: '2.5.1' };
-if (typeof __e == 'number') __e = core;
-});
-var _core_1 = _core.version;
-
 var _aFunction = function (it) {
   if (typeof it != 'function') throw TypeError(it + ' is not a function!');
   return it;
@@ -640,6 +650,11 @@ var _hide = _descriptors ? function (object, key, value) {
   return object;
 };
 
+var hasOwnProperty = {}.hasOwnProperty;
+var _has = function (it, key) {
+  return hasOwnProperty.call(it, key);
+};
+
 var PROTOTYPE = 'prototype';
 var $export = function (type, name, source) {
   var IS_FORCED = type & $export.F;
@@ -655,7 +670,7 @@ var $export = function (type, name, source) {
   if (IS_GLOBAL) source = name;
   for (key in source) {
     own = !IS_FORCED && target && target[key] !== undefined;
-    if (own && key in exports) continue;
+    if (own && _has(exports, key)) continue;
     out = own ? target[key] : source[key];
     exports[key] = IS_GLOBAL && typeof target[key] != 'function' ? source[key]
     : IS_BIND && own ? _ctx(out, _global)
@@ -689,11 +704,6 @@ $export.R = 128;
 var _export = $export;
 
 var _redefine = _hide;
-
-var hasOwnProperty = {}.hasOwnProperty;
-var _has = function (it, key) {
-  return hasOwnProperty.call(it, key);
-};
 
 var _iterators = {};
 
@@ -737,11 +747,17 @@ var _arrayIncludes = function (IS_INCLUDES) {
   };
 };
 
+var _shared = createCommonjsModule(function (module) {
 var SHARED = '__core-js_shared__';
 var store = _global[SHARED] || (_global[SHARED] = {});
-var _shared = function (key) {
-  return store[key] || (store[key] = {});
-};
+(module.exports = function (key, value) {
+  return store[key] || (store[key] = value !== undefined ? value : {});
+})('versions', []).push({
+  version: _core.version,
+  mode: _library ? 'pure' : 'global',
+  copyright: '© 2018 Denis Pushkarev (zloirock.ru)'
+});
+});
 
 var id = 0;
 var px = Math.random();
@@ -886,13 +902,14 @@ var _iterDefine = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORC
     IteratorPrototype = _objectGpo($anyNative.call(new Base()));
     if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
       _setToStringTag(IteratorPrototype, TAG, true);
+      if (!_library && typeof IteratorPrototype[ITERATOR] != 'function') _hide(IteratorPrototype, ITERATOR, returnThis);
     }
   }
   if (DEF_VALUES && $native && $native.name !== VALUES) {
     VALUES_BUG = true;
     $default = function values() { return $native.call(this); };
   }
-  if ((FORCED) && (BUGGY || VALUES_BUG || !proto[ITERATOR])) {
+  if ((!_library || FORCED) && (BUGGY || VALUES_BUG || !proto[ITERATOR])) {
     _hide(proto, ITERATOR, $default);
   }
   _iterators[NAME] = $default;
@@ -1145,7 +1162,7 @@ var _microtask = function () {
     notify = function () {
       process$1.nextTick(flush);
     };
-  } else if (Observer) {
+  } else if (Observer && !(_global.navigator && _global.navigator.standalone)) {
     var toggle = true;
     var node = document.createTextNode('');
     new Observer(flush).observe(node, { characterData: true });
@@ -1153,7 +1170,7 @@ var _microtask = function () {
       node.data = toggle = !toggle;
     };
   } else if (Promise$1 && Promise$1.resolve) {
-    var promise = Promise$1.resolve();
+    var promise = Promise$1.resolve(undefined);
     notify = function () {
       promise.then(flush);
     };
@@ -1196,6 +1213,9 @@ var _perform = function (exec) {
     return { e: true, v: e };
   }
 };
+
+var navigator = _global.navigator;
+var _userAgent = navigator && navigator.userAgent || '';
 
 var _promiseResolve = function (C, x) {
   _anObject(C);
@@ -1246,6 +1266,8 @@ var microtask = _microtask();
 var PROMISE = 'Promise';
 var TypeError$1 = _global.TypeError;
 var process$2 = _global.process;
+var versions = process$2 && process$2.versions;
+var v8 = versions && versions.v8 || '';
 var $Promise = _global[PROMISE];
 var isNode$1 = _classof(process$2) == 'process';
 var empty = function () {             };
@@ -1257,7 +1279,10 @@ var USE_NATIVE = !!function () {
     var FakePromise = (promise.constructor = {})[_wks('species')] = function (exec) {
       exec(empty, empty);
     };
-    return (isNode$1 || typeof PromiseRejectionEvent == 'function') && promise.then(empty) instanceof FakePromise;
+    return (isNode$1 || typeof PromiseRejectionEvent == 'function')
+      && promise.then(empty) instanceof FakePromise
+      && v8.indexOf('6.6') !== 0
+      && _userAgent.indexOf('Chrome/66') === -1;
   } catch (e) {             }
 }();
 var isThenable = function (it) {
@@ -1277,7 +1302,7 @@ var notify = function (promise, isReject) {
       var resolve = reaction.resolve;
       var reject = reaction.reject;
       var domain = reaction.domain;
-      var result, then;
+      var result, then, exited;
       try {
         if (handler) {
           if (!ok) {
@@ -1288,7 +1313,10 @@ var notify = function (promise, isReject) {
           else {
             if (domain) domain.enter();
             result = handler(value);
-            if (domain) domain.exit();
+            if (domain) {
+              domain.exit();
+              exited = true;
+            }
           }
           if (result === reaction.promise) {
             reject(TypeError$1('Promise-chain cycle'));
@@ -1297,6 +1325,7 @@ var notify = function (promise, isReject) {
           } else resolve(result);
         } else reject(value);
       } catch (e) {
+        if (domain && !exited) domain.exit();
         reject(e);
       }
     };
@@ -1327,14 +1356,7 @@ var onUnhandled = function (promise) {
   });
 };
 var isUnhandled = function (promise) {
-  if (promise._h == 1) return false;
-  var chain = promise._a || promise._c;
-  var i = 0;
-  var reaction;
-  while (chain.length > i) {
-    reaction = chain[i++];
-    if (reaction.fail || !isUnhandled(reaction.promise)) return false;
-  } return true;
+  return promise._h !== 1 && (promise._a || promise._c).length === 0;
 };
 var onHandleUnhandled = function (promise) {
   task.call(_global, function () {
@@ -1441,7 +1463,7 @@ _export(_export.S + _export.F * !USE_NATIVE, PROMISE, {
     return capability.promise;
   }
 });
-_export(_export.S + _export.F * (_library), PROMISE, {
+_export(_export.S + _export.F * (_library || !USE_NATIVE), PROMISE, {
   resolve: function resolve(x) {
     return _promiseResolve(_library && this === Wrapper ? $Promise : this, x);
   }
@@ -1638,188 +1660,6 @@ exports.default = function () {
 });
 var _createClass = unwrapExports(createClass);
 
-var io = require('socket.io-client');
-var timeout = function timeout(fn, s) {
-  return new _Promise(function (resolve) {
-    return setTimeout(function () {
-      return resolve(fn());
-    }, s);
-  });
-};
-var Auth = function () {
-  function Auth(options) {
-    _classCallCheck(this, Auth);
-    this.options = options;
-    this.client = io.connect(this.options.auth_url + '/');
-  }
-  _createClass(Auth, [{
-    key: 'req',
-    value: function () {
-      var _ref = _asyncToGenerator(regenerator.mark(function _callee(verb, query) {
-        var _this = this;
-        var res;
-        return regenerator.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.next = 2;
-                return new _Promise(function (resolve) {
-                  return _this.client.emit(verb, query, resolve);
-                });
-              case 2:
-                res = _context.sent;
-                if (!res.body.error) {
-                  _context.next = 7;
-                  break;
-                }
-                throw res;
-              case 7:
-                return _context.abrupt('return', res);
-              case 8:
-              case 'end':
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-      function req(_x, _x2) {
-        return _ref.apply(this, arguments);
-      }
-      return req;
-    }()
-  }, {
-    key: 'authorize',
-    value: function () {
-      var _ref2 = _asyncToGenerator(regenerator.mark(function _callee2() {
-        var refresh = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.refresh_token;
-        return regenerator.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                if (!(this.options.user_key && this.options.user_secret || refresh)) {
-                  _context2.next = 2;
-                  break;
-                }
-                return _context2.abrupt('return', refresh ? this.refreshToken() : this.getToken());
-              case 2:
-              case 'end':
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-      function authorize() {
-        return _ref2.apply(this, arguments);
-      }
-      return authorize;
-    }()
-  }, {
-    key: 'getToken',
-    value: function () {
-      var _ref3 = _asyncToGenerator(regenerator.mark(function _callee3() {
-        var _this2 = this;
-        var body, res, t;
-        return regenerator.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                body = {
-                  user_key: this.options.user_key,
-                  user_secret: this.options.user_secret
-                };
-                _context3.prev = 1;
-                _context3.next = 4;
-                return this.req('POST', {
-                  url: '/authenticate',
-                  body: body
-                });
-              case 4:
-                res = _context3.sent;
-                this.access_token = res.body.access_token;
-                this.refresh_token = res.body.refresh_token;
-                _context3.next = 16;
-                break;
-              case 9:
-                _context3.prev = 9;
-                _context3.t0 = _context3['catch'](1);
-                t = _context3.t0.body.reason ? parseInt(_context3.t0.body.reason.replace(/[^0-9]+/g, '')) : 500;
-                t = isNaN(t) ? 500 : t;
-                if (_context3.t0.statusCode !== 503) {
-                  console.error('cubic-client encountered an error while authenticating:');
-                  console.error(_context3.t0);
-                  console.error('retrying in ' + t + 'ms \n');
-                }
-                _context3.next = 16;
-                return timeout(function () {
-                  return _this2.getToken();
-                }, t);
-              case 16:
-              case 'end':
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this, [[1, 9]]);
-      }));
-      function getToken() {
-        return _ref3.apply(this, arguments);
-      }
-      return getToken;
-    }()
-  }, {
-    key: 'refreshToken',
-    value: function () {
-      var _ref4 = _asyncToGenerator(regenerator.mark(function _callee4() {
-        var _this3 = this;
-        var body, res, t;
-        return regenerator.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                if (this.refreshing) {
-                  _context4.next = 17;
-                  break;
-                }
-                this.refreshing = true;
-                body = {
-                  refresh_token: this.refresh_token
-                };
-                _context4.prev = 3;
-                _context4.next = 6;
-                return this.req('POST', {
-                  url: '/refresh',
-                  body: body
-                });
-              case 6:
-                res = _context4.sent;
-                this.access_token = res.body.access_token;
-                this.refreshing = false;
-                _context4.next = 17;
-                break;
-              case 11:
-                _context4.prev = 11;
-                _context4.t0 = _context4['catch'](3);
-                this.refreshing = false;
-                t = _context4.t0.body.reason ? parseInt(_context4.t0.body.reason.replace(/[^0-9]+/g, '')) : 5000;
-                _context4.next = 17;
-                return timeout(function () {
-                  return _this3.refreshToken();
-                }, t);
-              case 17:
-              case 'end':
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this, [[3, 11]]);
-      }));
-      function refreshToken() {
-        return _ref4.apply(this, arguments);
-      }
-      return refreshToken;
-    }()
-  }]);
-  return Auth;
-}();
-
 var _objectSap = function (KEY, exec) {
   var fn = (_core.Object || {})[KEY] || Object[KEY];
   var exp = {};
@@ -1967,8 +1807,8 @@ var gOPD$1 = _objectGopd.f;
 var dP$1 = _objectDp.f;
 var gOPN$1 = _objectGopnExt.f;
 var $Symbol = _global.Symbol;
-var $JSON = _global.JSON;
-var _stringify = $JSON && $JSON.stringify;
+var $JSON$1 = _global.JSON;
+var _stringify = $JSON$1 && $JSON$1.stringify;
 var PROTOTYPE$2 = 'prototype';
 var HIDDEN = _wks('_hidden');
 var TO_PRIMITIVE = _wks('toPrimitive');
@@ -2112,24 +1952,23 @@ _export(_export.S + _export.F * !USE_NATIVE$1, 'Object', {
   getOwnPropertyNames: $getOwnPropertyNames,
   getOwnPropertySymbols: $getOwnPropertySymbols
 });
-$JSON && _export(_export.S + _export.F * (!USE_NATIVE$1 || _fails(function () {
+$JSON$1 && _export(_export.S + _export.F * (!USE_NATIVE$1 || _fails(function () {
   var S = $Symbol();
   return _stringify([S]) != '[null]' || _stringify({ a: S }) != '{}' || _stringify(Object(S)) != '{}';
 })), 'JSON', {
   stringify: function stringify(it) {
-    if (it === undefined || isSymbol(it)) return;
     var args = [it];
     var i = 1;
     var replacer, $replacer;
     while (arguments.length > i) args.push(arguments[i++]);
-    replacer = args[1];
-    if (typeof replacer == 'function') $replacer = replacer;
-    if ($replacer || !_isArray(replacer)) replacer = function (key, value) {
-      if ($replacer) value = $replacer.call(this, key, value);
+    $replacer = replacer = args[1];
+    if (!_isObject(replacer) && it === undefined || isSymbol(it)) return;
+    if (!_isArray(replacer)) replacer = function (key, value) {
+      if (typeof $replacer == 'function') value = $replacer.call(this, key, value);
       if (!isSymbol(value)) return value;
     };
     args[1] = replacer;
-    return _stringify.apply($JSON, args);
+    return _stringify.apply($JSON$1, args);
   }
 });
 $Symbol[PROTOTYPE$2][TO_PRIMITIVE] || _hide($Symbol[PROTOTYPE$2], TO_PRIMITIVE, $Symbol[PROTOTYPE$2].valueOf);
@@ -2241,6 +2080,415 @@ exports.default = function (subClass, superClass) {
 });
 var _inherits = unwrapExports(inherits);
 
+var core_getIterator = _core.getIterator = function (it) {
+  var iterFn = core_getIteratorMethod(it);
+  if (typeof iterFn != 'function') throw TypeError(it + ' is not iterable!');
+  return _anObject(iterFn.call(it));
+};
+
+var getIterator = core_getIterator;
+
+var getIterator$1 = createCommonjsModule(function (module) {
+module.exports = { "default": getIterator, __esModule: true };
+});
+var _getIterator = unwrapExports(getIterator$1);
+
+var queue$1 = require('async-delay-queue');
+var Client = function () {
+  function Client(url, options) {
+    _classCallCheck(this, Client);
+    this.url = url;
+    this.options = options;
+    this.subscriptions = [];
+    this.queue = queue$1;
+    this.requestIds = 1;
+    this.requests = [];
+  }
+  _createClass(Client, [{
+    key: 'connect',
+    value: function () {
+      var _ref = _asyncToGenerator(regenerator.mark(function _callee() {
+        return regenerator.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return this.setClient();
+              case 2:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+      function connect() {
+        return _ref.apply(this, arguments);
+      }
+      return connect;
+    }()
+  }, {
+    key: 'setClient',
+    value: function setClient() {
+      var _this = this;
+      var WS = WebSocket;
+      this.connecting = new _Promise(function (resolve) {
+        var url = _this.auth && _this.auth.acess_token ? _this.url + '?bearer=' + _this.auth.access_token : _this.url;
+        _this.client = new WS(url);
+        _this.client.onopen = resolve;
+        _this.client.onclose = function (e) {
+          return _this.reconnect();
+        };
+        _this.client.onerror = function (e) {
+          return e.code !== 'ECONNREFUSED' || _this.reconnect();
+        };
+        _this.client.onmessage = function (data) {
+          data = JSON.parse(data.data);
+          if (typeof data === 'string' && data.startsWith('primus::ping::')) {
+            _this.client.send(_JSON$stringify(data.replace('ping', 'pong')));
+          } else if (data.action === 'RES' && data.id) {
+              var pending = _this.requests.find(function (r) {
+                return r.id === data.id;
+              });
+              if (pending) pending.resolve(data);
+            } else if (data.action === 'PUBLISH') {
+                var sub = _this.subscriptions.find(function (s) {
+                  return s.room === data.room;
+                });
+                sub.fn(data.data);
+              }
+        };
+      });
+      return this.connecting;
+    }
+  }, {
+    key: 'reconnect',
+    value: function () {
+      var _ref2 = _asyncToGenerator(regenerator.mark(function _callee2() {
+        var _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, sub;
+        return regenerator.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                this.client.removeAllListeners();
+                _context2.next = 3;
+                return this.connect();
+              case 3:
+                _iteratorNormalCompletion = true;
+                _didIteratorError = false;
+                _iteratorError = undefined;
+                _context2.prev = 6;
+                for (_iterator = _getIterator(this.subscriptions); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                  sub = _step.value;
+                  this.client.send(_JSON$stringify({
+                    action: 'SUBSCRIBE',
+                    room: sub.room
+                  }));
+                }
+                _context2.next = 14;
+                break;
+              case 10:
+                _context2.prev = 10;
+                _context2.t0 = _context2['catch'](6);
+                _didIteratorError = true;
+                _iteratorError = _context2.t0;
+              case 14:
+                _context2.prev = 14;
+                _context2.prev = 15;
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+              case 17:
+                _context2.prev = 17;
+                if (!_didIteratorError) {
+                  _context2.next = 20;
+                  break;
+                }
+                throw _iteratorError;
+              case 20:
+                return _context2.finish(17);
+              case 21:
+                return _context2.finish(14);
+              case 22:
+              case 'end':
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this, [[6, 10, 14, 22], [15,, 17, 21]]);
+      }));
+      function reconnect() {
+        return _ref2.apply(this, arguments);
+      }
+      return reconnect;
+    }()
+  }, {
+    key: 'request',
+    value: function () {
+      var _ref3 = _asyncToGenerator(regenerator.mark(function _callee3(verb, query) {
+        var res;
+        return regenerator.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.next = 2;
+                return this.req(verb, query);
+              case 2:
+                res = _context3.sent;
+                return _context3.abrupt('return', this.errCheck(res, verb, query));
+              case 4:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+      function request(_x, _x2) {
+        return _ref3.apply(this, arguments);
+      }
+      return request;
+    }()
+  }, {
+    key: 'req',
+    value: function () {
+      var _ref4 = _asyncToGenerator(regenerator.mark(function _callee4(verb, query) {
+        var _this2 = this;
+        return regenerator.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                _context4.next = 2;
+                return this.connecting;
+              case 2:
+                return _context4.abrupt('return', new _Promise(function (resolve) {
+                  var id = _this2.requestIds++;
+                  var payload = { action: verb, id: id };
+                  if (typeof query === 'string') {
+                    payload.url = query;
+                  } else {
+                    payload.url = query.url;
+                    payload.body = query.body;
+                  }
+                  _this2.requests.push({ id: id, resolve: resolve });
+                  try {
+                    _this2.client.send(_JSON$stringify(payload));
+                  } catch (err) {
+                    _this2.client.emit('error', err);
+                    _this2.requests.pop();
+                  }
+                }));
+              case 3:
+              case 'end':
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+      function req(_x3, _x4) {
+        return _ref4.apply(this, arguments);
+      }
+      return req;
+    }()
+  }, {
+    key: 'retry',
+    value: function () {
+      var _ref5 = _asyncToGenerator(regenerator.mark(function _callee5(res, verb, query) {
+        var _this3 = this;
+        var delay, reres;
+        return regenerator.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                delay = res.body && res.body.reason ? parseInt(res.body.reason.replace(/[^0-9]+/g, '')) : 500;
+                delay = isNaN(delay) ? 500 : delay;
+                _context5.next = 4;
+                return this.queue.delay(function () {
+                  return _this3.req(verb, query);
+                }, delay, 30000, 'unshift');
+              case 4:
+                reres = _context5.sent;
+                return _context5.abrupt('return', this.errCheck(reres, verb, query));
+              case 6:
+              case 'end':
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+      function retry(_x5, _x6, _x7) {
+        return _ref5.apply(this, arguments);
+      }
+      return retry;
+    }()
+  }, {
+    key: 'errCheck',
+    value: function () {
+      var _ref6 = _asyncToGenerator(regenerator.mark(function _callee6(res, verb, query) {
+        return regenerator.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                if (!res.body.error) {
+                  _context6.next = 4;
+                  break;
+                }
+                throw res;
+              case 4:
+                return _context6.abrupt('return', res.body);
+              case 5:
+              case 'end':
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+      function errCheck(_x8, _x9, _x10) {
+        return _ref6.apply(this, arguments);
+      }
+      return errCheck;
+    }()
+  }]);
+  return Client;
+}();
+
+var Auth = function (_Client) {
+  _inherits(Auth, _Client);
+  function Auth() {
+    _classCallCheck(this, Auth);
+    return _possibleConstructorReturn(this, (Auth.__proto__ || _Object$getPrototypeOf(Auth)).apply(this, arguments));
+  }
+  _createClass(Auth, [{
+    key: 'authorize',
+    value: function () {
+      var _ref = _asyncToGenerator(regenerator.mark(function _callee() {
+        var refresh = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.refresh_token;
+        return regenerator.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!(this.options.user_key && this.options.user_secret || refresh)) {
+                  _context.next = 2;
+                  break;
+                }
+                return _context.abrupt('return', refresh ? this.refreshToken() : this.getToken());
+              case 2:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+      function authorize() {
+        return _ref.apply(this, arguments);
+      }
+      return authorize;
+    }()
+  }, {
+    key: 'getToken',
+    value: function () {
+      var _ref2 = _asyncToGenerator(regenerator.mark(function _callee2() {
+        var body, res;
+        return regenerator.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                body = {
+                  user_key: this.options.user_key,
+                  user_secret: this.options.user_secret
+                };
+                _context2.next = 3;
+                return this.request('POST', {
+                  url: '/authenticate',
+                  body: body
+                });
+              case 3:
+                res = _context2.sent;
+                this.access_token = res.access_token;
+                this.refresh_token = res.refresh_token;
+              case 6:
+              case 'end':
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+      function getToken() {
+        return _ref2.apply(this, arguments);
+      }
+      return getToken;
+    }()
+  }, {
+    key: 'refreshToken',
+    value: function () {
+      var _ref3 = _asyncToGenerator(regenerator.mark(function _callee3() {
+        var body, res;
+        return regenerator.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (this.refreshing) {
+                  _context3.next = 8;
+                  break;
+                }
+                this.refreshing = true;
+                body = {
+                  refresh_token: this.refresh_token
+                };
+                _context3.next = 5;
+                return this.request('POST', {
+                  url: '/refresh',
+                  body: body
+                });
+              case 5:
+                res = _context3.sent;
+                this.access_token = res.access_token;
+                this.refreshing = false;
+              case 8:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+      function refreshToken() {
+        return _ref3.apply(this, arguments);
+      }
+      return refreshToken;
+    }()
+  }, {
+    key: 'errCheck',
+    value: function () {
+      var _ref4 = _asyncToGenerator(regenerator.mark(function _callee4(res, verb, query) {
+        return regenerator.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                if (!(res.statusCode >= 400)) {
+                  _context4.next = 5;
+                  break;
+                }
+                if (res.statusCode !== 503 && res.statusCode !== 404) {
+                  console.error('cubic-client encountered an error while authenticating:');
+                  console.error(res.body);
+                  console.error('retrying... \n');
+                }
+                return _context4.abrupt('return', this.retry(res, verb, query));
+              case 5:
+                return _context4.abrupt('return', res.body);
+              case 6:
+              case 'end':
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+      function errCheck(_x2, _x3, _x4) {
+        return _ref4.apply(this, arguments);
+      }
+      return errCheck;
+    }()
+  }]);
+  return Auth;
+}(Client);
+
 var ServerError = function (_Error) {
   _inherits(ServerError, _Error);
   function ServerError(_ref, query) {
@@ -2257,22 +2505,14 @@ var ServerError = function (_Error) {
   return ServerError;
 }(Error);
 
-var io$1 = require('socket.io-client');
-var queue$1 = require('async-delay-queue');
-var timeout$1 = function timeout(fn, s) {
-  return new _Promise(function (resolve) {
-    return setTimeout(function () {
-      return resolve(fn());
-    }, s);
-  });
-};
-var Connection = function () {
-  function Connection(options) {
+var Connection = function (_Client) {
+  _inherits(Connection, _Client);
+  function Connection(url, options) {
     _classCallCheck(this, Connection);
-    this.options = options;
-    this.subscriptions = [];
-    this.queue = queue$1;
-    this.auth = new Auth(options);
+    var _this = _possibleConstructorReturn(this, (Connection.__proto__ || _Object$getPrototypeOf(Connection)).call(this, url, options));
+    _this.auth = new Auth(options.auth_url, options);
+    _this.auth.connect();
+    return _this;
   }
   _createClass(Connection, [{
     key: 'connect',
@@ -2300,260 +2540,82 @@ var Connection = function () {
       return connect;
     }()
   }, {
-    key: 'setClient',
+    key: 'errCheck',
     value: function () {
-      var _ref2 = _asyncToGenerator(regenerator.mark(function _callee2(skipListeners) {
-        var _this = this;
-        var sioConfig;
+      var _ref2 = _asyncToGenerator(regenerator.mark(function _callee2() {
+        var res = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        var verb = arguments[1];
+        var query = arguments[2];
         return regenerator.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                sioConfig = this.auth.access_token ? {
-                  query: 'bearer=' + this.auth.access_token,
-                  reconnection: true
-                } : {
-                  reconnection: true
-                };
-                this.client = io$1.connect(this.options.api_url + this.options.namespace, sioConfig);
-                if (!skipListeners) {
-                  this.client.on('error', function () {
-                    return _this.reload();
-                  });
-                  this.client.on('connect_error', function () {
-                    return _this.reload();
-                  });
-                  this.client.on('disconnect', function () {
-                    return _this.reload();
-                  });
-                  this.client.on('connect', function () {
-                    _this.reconnecting = false;
-                    _this.subscriptions.forEach(function (sub) {
-                      return _this.client.emit('subscribe', sub);
-                    });
-                  });
-                  this.client.on('subscribed', function (sub) {
-                    if (!_this.subscriptions.includes(sub)) _this.subscriptions.push(sub);
-                  });
+                if (!(res.body && res.body.reason && res.body.reason.includes('jwt expired'))) {
+                  _context2.next = 4;
+                  break;
                 }
-                _context2.next = 5;
-                return timeout$1(function () {
-                  if (!_this.client.connected) _this.setClient(true);
-                }, 10000);
-              case 5:
+                _context2.next = 3;
+                return this.connect();
+              case 3:
+                return _context2.abrupt('return', this.retry(res, verb, query));
+              case 4:
+                if (res.statusCode) {
+                  _context2.next = 7;
+                  break;
+                }
+                if (!res.includes('timed out')) {
+                  _context2.next = 7;
+                  break;
+                }
+                return _context2.abrupt('return', this.retry(res, verb, query));
+              case 7:
+                if (!(res.statusCode === 429)) {
+                  _context2.next = 9;
+                  break;
+                }
+                return _context2.abrupt('return', this.retry(res, verb, query));
+              case 9:
+                if (!(res.statusCode === 503)) {
+                  _context2.next = 11;
+                  break;
+                }
+                return _context2.abrupt('return', this.retry(res, verb, query));
+              case 11:
+                if (![301, 302, 303, 307, 308].includes(res.statusCode)) {
+                  _context2.next = 13;
+                  break;
+                }
+                return _context2.abrupt('return', this.retry(res, verb, res.body));
+              case 13:
+                if (!(parseInt(res.statusCode.toString()[0]) > 3)) {
+                  _context2.next = 15;
+                  break;
+                }
+                throw new ServerError(res, query);
+              case 15:
+                return _context2.abrupt('return', res.body);
+              case 16:
               case 'end':
                 return _context2.stop();
             }
           }
         }, _callee2, this);
       }));
-      function setClient(_x) {
-        return _ref2.apply(this, arguments);
-      }
-      return setClient;
-    }()
-  }, {
-    key: 'reconnect',
-    value: function () {
-      var _ref3 = _asyncToGenerator(regenerator.mark(function _callee3(refresh) {
-        return regenerator.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                this.reconnecting = true;
-                this.client.disconnect();
-                _context3.next = 4;
-                return this.auth.authorize(refresh);
-              case 4:
-                this.client.io.opts.query = this.auth.access_token ? 'bearer=' + this.auth.access_token : null;
-                this.client.connect();
-              case 6:
-              case 'end':
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-      function reconnect(_x2) {
-        return _ref3.apply(this, arguments);
-      }
-      return reconnect;
-    }()
-  }, {
-    key: 'reload',
-    value: function () {
-      var _ref4 = _asyncToGenerator(regenerator.mark(function _callee4(refresh) {
-        return regenerator.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                if (this.reconnecting) {
-                  _context4.next = 3;
-                  break;
-                }
-                _context4.next = 3;
-                return this.reconnect(refresh);
-              case 3:
-              case 'end':
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-      function reload(_x3) {
-        return _ref4.apply(this, arguments);
-      }
-      return reload;
-    }()
-  }, {
-    key: 'request',
-    value: function () {
-      var _ref5 = _asyncToGenerator(regenerator.mark(function _callee5(verb, query) {
-        var res;
-        return regenerator.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                _context5.next = 2;
-                return this.req(verb, query);
-              case 2:
-                res = _context5.sent;
-                return _context5.abrupt('return', this.errCheck(res, verb, query));
-              case 4:
-              case 'end':
-                return _context5.stop();
-            }
-          }
-        }, _callee5, this);
-      }));
-      function request(_x4, _x5) {
-        return _ref5.apply(this, arguments);
-      }
-      return request;
-    }()
-  }, {
-    key: 'req',
-    value: function () {
-      var _ref6 = _asyncToGenerator(regenerator.mark(function _callee6(verb, query) {
-        var _this2 = this;
-        return regenerator.wrap(function _callee6$(_context6) {
-          while (1) {
-            switch (_context6.prev = _context6.next) {
-              case 0:
-                return _context6.abrupt('return', new _Promise(function (resolve) {
-                  return _this2.client.emit(verb, query, resolve);
-                }));
-              case 1:
-              case 'end':
-                return _context6.stop();
-            }
-          }
-        }, _callee6, this);
-      }));
-      function req(_x6, _x7) {
-        return _ref6.apply(this, arguments);
-      }
-      return req;
-    }()
-  }, {
-    key: 'retry',
-    value: function () {
-      var _ref7 = _asyncToGenerator(regenerator.mark(function _callee7(res, verb, query) {
-        var _this3 = this;
-        var delay, reres;
-        return regenerator.wrap(function _callee7$(_context7) {
-          while (1) {
-            switch (_context7.prev = _context7.next) {
-              case 0:
-                delay = res.body && res.body.reason ? parseInt(res.body.reason.replace(/[^0-9]+/g, '')) : 500;
-                delay = isNaN(delay) ? 500 : delay;
-                _context7.next = 4;
-                return this.queue.delay(function () {
-                  return _this3.req(verb, query);
-                }, delay, 30000, 'unshift');
-              case 4:
-                reres = _context7.sent;
-                return _context7.abrupt('return', this.errCheck(reres, verb, query));
-              case 6:
-              case 'end':
-                return _context7.stop();
-            }
-          }
-        }, _callee7, this);
-      }));
-      function retry(_x8, _x9, _x10) {
-        return _ref7.apply(this, arguments);
-      }
-      return retry;
-    }()
-  }, {
-    key: 'errCheck',
-    value: function () {
-      var _ref8 = _asyncToGenerator(regenerator.mark(function _callee8() {
-        var res = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-        var verb = arguments[1];
-        var query = arguments[2];
-        return regenerator.wrap(function _callee8$(_context8) {
-          while (1) {
-            switch (_context8.prev = _context8.next) {
-              case 0:
-                if (!(res.body && res.body.reason && res.body.reason.includes('jwt expired'))) {
-                  _context8.next = 4;
-                  break;
-                }
-                _context8.next = 3;
-                return this.reload();
-              case 3:
-                return _context8.abrupt('return', this.retry(res, verb, query));
-              case 4:
-                if (!(res.statusCode === 429)) {
-                  _context8.next = 6;
-                  break;
-                }
-                return _context8.abrupt('return', this.retry(res, verb, query));
-              case 6:
-                if (!(res.statusCode === 503)) {
-                  _context8.next = 8;
-                  break;
-                }
-                return _context8.abrupt('return', this.retry(res, verb, query));
-              case 8:
-                if (![301, 302, 303, 307, 308].includes(res.statusCode)) {
-                  _context8.next = 10;
-                  break;
-                }
-                return _context8.abrupt('return', this.retry(res, verb, res.body));
-              case 10:
-                if (!(parseInt(res.statusCode.toString()[0]) > 3)) {
-                  _context8.next = 12;
-                  break;
-                }
-                throw new ServerError(res, query);
-              case 12:
-                return _context8.abrupt('return', res.body);
-              case 13:
-              case 'end':
-                return _context8.stop();
-            }
-          }
-        }, _callee8, this);
-      }));
       function errCheck() {
-        return _ref8.apply(this, arguments);
+        return _ref2.apply(this, arguments);
       }
       return errCheck;
     }()
   }]);
   return Connection;
-}();
+}(Client);
 
-var Client = function () {
+var Client$1 = function () {
   function Client(options) {
     _classCallCheck(this, Client);
     this.options = _Object$assign({
-      api_url: 'http://localhost:3003/',
-      auth_url: 'http://localhost:3030/',
-      namespace: '/',
+      api_url: 'ws://localhost:3003/ws',
+      auth_url: 'ws://localhost:3030/ws',
       user_key: null,
       user_secret: null,
       ignore_limiter: false
@@ -2572,7 +2634,7 @@ var Client = function () {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                this.connection = new Connection(this.options);
+                this.connection = new Connection(this.options.api_url, this.options);
                 this.connecting = this.connection.connect();
                 _context.next = 4;
                 return this.connecting;
@@ -2591,7 +2653,7 @@ var Client = function () {
   }, {
     key: 'subscribe',
     value: function () {
-      var _ref2 = _asyncToGenerator(regenerator.mark(function _callee2(endpoint, fn) {
+      var _ref2 = _asyncToGenerator(regenerator.mark(function _callee2(room, fn) {
         return regenerator.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -2599,8 +2661,11 @@ var Client = function () {
                 _context2.next = 2;
                 return this.connecting;
               case 2:
-                this.emit('subscribe', endpoint);
-                return _context2.abrupt('return', fn ? this.on(endpoint, fn) : null);
+                this.connection.client.send(_JSON$stringify({
+                  action: 'SUBSCRIBE',
+                  room: room
+                }));
+                this.connection.subscriptions.push({ room: room, fn: fn });
               case 4:
               case 'end':
                 return _context2.stop();
@@ -2616,7 +2681,8 @@ var Client = function () {
   }, {
     key: 'unsubscribe',
     value: function () {
-      var _ref3 = _asyncToGenerator(regenerator.mark(function _callee3(endpoint) {
+      var _ref3 = _asyncToGenerator(regenerator.mark(function _callee3(room) {
+        var i;
         return regenerator.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -2624,9 +2690,15 @@ var Client = function () {
                 _context3.next = 2;
                 return this.connecting;
               case 2:
-                this.emit('unsubscribe', endpoint);
-                this.connection.client.off(endpoint);
-              case 4:
+                this.connection.client.send(_JSON$stringify({
+                  action: 'UNSUBSCRIBE',
+                  room: room
+                }));
+                i = this.connection.subscriptions.findIndex(function (s) {
+                  return s.room === room;
+                });
+                this.connection.subscriptions.splice(i, 1);
+              case 5:
               case 'end':
                 return _context3.stop();
             }
@@ -2639,9 +2711,9 @@ var Client = function () {
       return unsubscribe;
     }()
   }, {
-    key: 'on',
+    key: 'query',
     value: function () {
-      var _ref4 = _asyncToGenerator(regenerator.mark(function _callee4(ev, fn) {
+      var _ref4 = _asyncToGenerator(regenerator.mark(function _callee4(verb, _query) {
         return regenerator.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -2649,7 +2721,7 @@ var Client = function () {
                 _context4.next = 2;
                 return this.connecting;
               case 2:
-                return _context4.abrupt('return', this.connection.client.on(ev, fn));
+                return _context4.abrupt('return', this.connection.request(verb, _query));
               case 3:
               case 'end':
                 return _context4.stop();
@@ -2657,80 +2729,8 @@ var Client = function () {
           }
         }, _callee4, this);
       }));
-      function on(_x4, _x5) {
+      function query(_x4, _x5) {
         return _ref4.apply(this, arguments);
-      }
-      return on;
-    }()
-  }, {
-    key: 'once',
-    value: function () {
-      var _ref5 = _asyncToGenerator(regenerator.mark(function _callee5(ev, fn) {
-        return regenerator.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                _context5.next = 2;
-                return this.connecting;
-              case 2:
-                return _context5.abrupt('return', this.connection.client.once(ev, fn));
-              case 3:
-              case 'end':
-                return _context5.stop();
-            }
-          }
-        }, _callee5, this);
-      }));
-      function once(_x6, _x7) {
-        return _ref5.apply(this, arguments);
-      }
-      return once;
-    }()
-  }, {
-    key: 'emit',
-    value: function () {
-      var _ref6 = _asyncToGenerator(regenerator.mark(function _callee6(ev, data) {
-        return regenerator.wrap(function _callee6$(_context6) {
-          while (1) {
-            switch (_context6.prev = _context6.next) {
-              case 0:
-                _context6.next = 2;
-                return this.connecting;
-              case 2:
-                this.connection.client.emit(ev, data);
-              case 3:
-              case 'end':
-                return _context6.stop();
-            }
-          }
-        }, _callee6, this);
-      }));
-      function emit(_x8, _x9) {
-        return _ref6.apply(this, arguments);
-      }
-      return emit;
-    }()
-  }, {
-    key: 'query',
-    value: function () {
-      var _ref7 = _asyncToGenerator(regenerator.mark(function _callee7(verb, _query) {
-        return regenerator.wrap(function _callee7$(_context7) {
-          while (1) {
-            switch (_context7.prev = _context7.next) {
-              case 0:
-                _context7.next = 2;
-                return this.connecting;
-              case 2:
-                return _context7.abrupt('return', this.connection.request(verb, _query));
-              case 3:
-              case 'end':
-                return _context7.stop();
-            }
-          }
-        }, _callee7, this);
-      }));
-      function query(_x10, _x11) {
-        return _ref7.apply(this, arguments);
       }
       return query;
     }()
@@ -2778,7 +2778,75 @@ var Client = function () {
   }, {
     key: 'login',
     value: function () {
-      var _ref8 = _asyncToGenerator(regenerator.mark(function _callee8(user, secret) {
+      var _ref5 = _asyncToGenerator(regenerator.mark(function _callee5(user, secret) {
+        return regenerator.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.next = 2;
+                return this.connecting;
+              case 2:
+                this.connection.auth.options.user_key = user;
+                this.connection.auth.options.user_secret = secret;
+                return _context5.abrupt('return', this.connection.reload(false));
+              case 5:
+              case 'end':
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+      function login(_x6, _x7) {
+        return _ref5.apply(this, arguments);
+      }
+      return login;
+    }()
+  }, {
+    key: 'setRefreshToken',
+    value: function () {
+      var _ref6 = _asyncToGenerator(regenerator.mark(function _callee6(token) {
+        return regenerator.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                this.connection.auth.refresh_token = token;
+              case 1:
+              case 'end':
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+      function setRefreshToken(_x8) {
+        return _ref6.apply(this, arguments);
+      }
+      return setRefreshToken;
+    }()
+  }, {
+    key: 'getRefreshToken',
+    value: function () {
+      var _ref7 = _asyncToGenerator(regenerator.mark(function _callee7() {
+        return regenerator.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                return _context7.abrupt('return', this.connection.auth.refresh_token);
+              case 1:
+              case 'end':
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+      function getRefreshToken() {
+        return _ref7.apply(this, arguments);
+      }
+      return getRefreshToken;
+    }()
+  }, {
+    key: 'setAccessToken',
+    value: function () {
+      var _ref8 = _asyncToGenerator(regenerator.mark(function _callee8(token) {
         return regenerator.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
@@ -2786,9 +2854,9 @@ var Client = function () {
                 _context8.next = 2;
                 return this.connecting;
               case 2:
-                this.connection.auth.options.user_key = user;
-                this.connection.auth.options.user_secret = secret;
-                return _context8.abrupt('return', this.connection.reload(false));
+                this.connection.auth.access_token = token;
+                _context8.next = 5;
+                return this.connection.reload();
               case 5:
               case 'end':
                 return _context8.stop();
@@ -2796,20 +2864,20 @@ var Client = function () {
           }
         }, _callee8, this);
       }));
-      function login(_x12, _x13) {
+      function setAccessToken(_x9) {
         return _ref8.apply(this, arguments);
       }
-      return login;
+      return setAccessToken;
     }()
   }, {
-    key: 'setRefreshToken',
+    key: 'getAccessToken',
     value: function () {
-      var _ref9 = _asyncToGenerator(regenerator.mark(function _callee9(token) {
+      var _ref9 = _asyncToGenerator(regenerator.mark(function _callee9() {
         return regenerator.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
               case 0:
-                this.connection.auth.refresh_token = token;
+                return _context9.abrupt('return', this.connection.auth.access_token);
               case 1:
               case 'end':
                 return _context9.stop();
@@ -2817,76 +2885,8 @@ var Client = function () {
           }
         }, _callee9, this);
       }));
-      function setRefreshToken(_x14) {
-        return _ref9.apply(this, arguments);
-      }
-      return setRefreshToken;
-    }()
-  }, {
-    key: 'getRefreshToken',
-    value: function () {
-      var _ref10 = _asyncToGenerator(regenerator.mark(function _callee10() {
-        return regenerator.wrap(function _callee10$(_context10) {
-          while (1) {
-            switch (_context10.prev = _context10.next) {
-              case 0:
-                return _context10.abrupt('return', this.connection.auth.refresh_token);
-              case 1:
-              case 'end':
-                return _context10.stop();
-            }
-          }
-        }, _callee10, this);
-      }));
-      function getRefreshToken() {
-        return _ref10.apply(this, arguments);
-      }
-      return getRefreshToken;
-    }()
-  }, {
-    key: 'setAccessToken',
-    value: function () {
-      var _ref11 = _asyncToGenerator(regenerator.mark(function _callee11(token) {
-        return regenerator.wrap(function _callee11$(_context11) {
-          while (1) {
-            switch (_context11.prev = _context11.next) {
-              case 0:
-                _context11.next = 2;
-                return this.connecting;
-              case 2:
-                this.connection.auth.access_token = token;
-                _context11.next = 5;
-                return this.connection.reload();
-              case 5:
-              case 'end':
-                return _context11.stop();
-            }
-          }
-        }, _callee11, this);
-      }));
-      function setAccessToken(_x15) {
-        return _ref11.apply(this, arguments);
-      }
-      return setAccessToken;
-    }()
-  }, {
-    key: 'getAccessToken',
-    value: function () {
-      var _ref12 = _asyncToGenerator(regenerator.mark(function _callee12() {
-        return regenerator.wrap(function _callee12$(_context12) {
-          while (1) {
-            switch (_context12.prev = _context12.next) {
-              case 0:
-                return _context12.abrupt('return', this.connection.auth.access_token);
-              case 1:
-              case 'end':
-                return _context12.stop();
-            }
-          }
-        }, _callee12, this);
-      }));
       function getAccessToken() {
-        return _ref12.apply(this, arguments);
+        return _ref9.apply(this, arguments);
       }
       return getAccessToken;
     }()
@@ -2894,5 +2894,5 @@ var Client = function () {
   return Client;
 }();
 
-module.exports = Client;
-//# sourceMappingURL=index.js.map
+module.exports = Client$1;
+//# sourceMappingURL=browser.js.map
